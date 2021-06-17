@@ -1,0 +1,3 @@
+run = "go build main.go && ./main"
+language = "go"
+onBoot = "export GOPATH=$HOME/go"
