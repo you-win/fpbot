@@ -13,6 +13,7 @@ import (
 
 type botData struct {
     startTime time.Time
+    requireIdent bool
 }
 
 func Run() {
@@ -28,15 +29,10 @@ func Run() {
 
     bd := botData {
         startTime: time.Now(),
+        requireIdent: true,
     }
 
     dg.AddHandler(bd.handleRegularText)
-
-	// dg.AddHandler(bd.ping)
-
-    // dg.AddHandler(bd.whoAmI)
-
-    // dg.AddHandler(bd.uptime)
 
 	dg.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
