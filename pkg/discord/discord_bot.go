@@ -6,14 +6,14 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-    "time"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
 
 type botData struct {
-    startTime time.Time
-    requireIdent bool
+	startTime    time.Time
+	requireIdent bool
 }
 
 func Run() {
@@ -25,14 +25,14 @@ func Run() {
 		return
 	}
 
-    defer dg.Close()
+	defer dg.Close()
 
-    bd := botData {
-        startTime: time.Now(),
-        requireIdent: true,
-    }
+	bd := botData{
+		startTime:    time.Now(),
+		requireIdent: true,
+	}
 
-    dg.AddHandler(bd.handleRegularText)
+	dg.AddHandler(bd.handleRegularText)
 
 	dg.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 
