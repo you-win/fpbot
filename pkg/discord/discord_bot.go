@@ -6,15 +6,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
-
-type botData struct {
-	startTime    time.Time
-	requireIdent bool
-}
 
 func Run() {
 	discordToken := os.Getenv("DISCORD_TOKEN")
@@ -27,10 +21,11 @@ func Run() {
 
 	defer dg.Close()
 
-	bd := botData{
-		startTime:    time.Now(),
-		requireIdent: true,
-	}
+	// bd := botData{
+	// 	startTime:    time.Now(),
+	// 	requireIdent: true,
+	// }
+    bd := NewBotData()
 
 	dg.AddHandler(bd.handleRegularText)
 

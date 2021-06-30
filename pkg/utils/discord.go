@@ -9,17 +9,24 @@ import (
 )
 
 func CheckCommand(s *dgo.Session, m *dgo.Message) (string, bool) {
-	if m.Author.ID == s.State.User.ID {
+	if CheckForSelf(s, m) {
 		return "", true
 	}
 
-	if !strings.HasPrefix(m.Content, "$") {
+	if !strings.HasPrefix(m.Content, "<>") {
 		return "", true
 	}
 
-	newString := strings.Replace(m.Content, "$", "", 1)
+	newString := strings.Replace(m.Content, "<>", "", 1)
 
 	return newString, false
+}
+
+func CheckForSelf(s *dgo.Session, m *dgo.Message) bool {
+    if m.Author.ID == s.State.User.ID {
+        return true
+    }
+    return false
 }
 
 func GetMessageGuild(s *dgo.Session, m *dgo.Message) (*dgo.Guild, error) {
