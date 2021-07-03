@@ -1,15 +1,12 @@
 package discord
 
 import (
-	// "fmt"
-	// "strconv"
 	"strings"
 	"time"
 
     "fpbot/pkg/utils"
     "fpbot/pkg/discord/discord_cmd"
 
-	// cowsay "github.com/Code-Hex/Neo-cowsay"
 	dgo "github.com/bwmarrin/discordgo"
     // db "github.com/replit/database-go"
 )
@@ -51,7 +48,7 @@ func (bd *BotData) handleRegularText(s *dgo.Session, m *dgo.MessageCreate) {
         return
 	}
 
-	splitMessage := strings.SplitN(message, " ", 2)
+    splitMessage := strings.Split(message, " ")
 
     cmd := discord_cmd.NewCommand(s, m.Message, bd, splitMessage)
 

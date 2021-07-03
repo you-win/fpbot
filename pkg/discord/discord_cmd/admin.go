@@ -12,20 +12,29 @@ type adminCommand struct {
 }
 
 func NewAdminCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
-    // dc := &adminCommand{
-    //     DiscordCommand: DiscordCommand{
-    //         Session: s,
-    //         Message: m,
-    //         BotData: b,
-    //     },
-    // }
-
     c := &cobra.Command{
         Use: "admin",
-        Short: "Run admin commands",
-    }
+        Short: "Perform an admin action",
+        Hidden: true,
+        Args: cobra.MinimumNArgs(1),
+        Run: func(cmd *cobra.Command, args []string){
+            validRole := fputils.CheckForRole("Admin", s, m)
 
-    c.AddCommand(NewSayCommand(s, m, b))
+            if !validRole {
+                s.ChannelMessageSend(m.ChannelID, "Invalid role, aborting.")
+                return
+            }
+        },
+    }
+    
+    c.AddCommand(
+        NewSayCommand(s, m, b),
+        NewUpdateStreamInfoCommand(s, m, b),
+        NewDBDeleteCommand(s, m, b),
+        NewAdminPointsCommand(s, m, b),
+    )
+
+    modifyUsageFunc(c, s, m)
 
     return c
 }

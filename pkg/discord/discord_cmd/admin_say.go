@@ -1,6 +1,8 @@
 package discord_cmd
 
 import (
+    "strings"
+
     fputils "fpbot/pkg/utils"
 
     "github.com/spf13/cobra"
@@ -12,13 +14,6 @@ type sayCommand struct {
 }
 
 func (c *sayCommand) run(args []string) {
-    validRole := fputils.CheckForRole("Admin", c.Session, c.Message)
-
-    if !validRole {
-        c.Session.ChannelMessageSend(c.Message.ChannelID, "Invalid role, aborting.")
-        return
-    }
-
     if len(args) < 2 {
         c.Session.ChannelMessageSend(c.Message.ChannelID, "Not enough params specified. Need 2 params: Channel and Message")
     }
@@ -35,7 +30,7 @@ func (c *sayCommand) run(args []string) {
         return
     }
 
-    c.Session.ChannelMessageSend(channelToSendTo.ID, args[1])
+    c.Session.ChannelMessageSend(channelToSendTo.ID, strings.Join(args[1:], " "))
 }
 
 func NewSayCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
@@ -48,12 +43,15 @@ func NewSayCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *c
     }
 
     c := &cobra.Command{
-        Use: "say",
+        Use: "say <channel> <some-text>",
         Short: "Have the bot say something",
+        Args: cobra.MinimumNArgs(2),
         Run: func(cmd *cobra.Command, args []string){
             dc.run(args)
         },
     }
+    
+    modifyUsageFunc(c, s, m)
 
     return c
 }

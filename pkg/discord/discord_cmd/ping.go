@@ -27,12 +27,13 @@ func NewPingCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *
     c := &cobra.Command{
         Use: "ping",
         Short: "Ping the bot",
-        // Long: "Ping the bot and hope for a Pong",
         Args: cobra.ExactArgs(0),
         Run: func(cmd *cobra.Command, args []string){
             dc.run()
         },
     }
+    
+    modifyUsageFunc(c, s, m)
 
     return c
 }

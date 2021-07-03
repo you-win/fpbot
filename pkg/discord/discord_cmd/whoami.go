@@ -37,6 +37,8 @@ func NewWhoAmICommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser)
             dc.run()
         },
     }
+    c.SetOut(dc)
+    c.SetErr(dc)
 
     return c
 }

@@ -34,8 +34,8 @@ func NewRepoCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *
             dc.run()
         },
     }
-    c.SetOut(dc)
-    c.SetErr(dc)
+    
+    modifyUsageFunc(c, s, m)
 
     return c
 }

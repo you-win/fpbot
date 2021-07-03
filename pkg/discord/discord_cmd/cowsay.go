@@ -2,6 +2,7 @@ package discord_cmd
 
 import (
     "fmt"
+    "strings"
 
     fputils "fpbot/pkg/utils"
 
@@ -17,7 +18,8 @@ type cowsayCommand struct {
 func (c *cowsayCommand) run(args []string) {
     cowMessage := "moo"
     if len(args) > 0 {
-        cowMessage = args[0]
+        cowMessage = strings.Join(args[:], " ")
+        // cowMessage = args[0]
     }
     say, err := cowsay.Say(
         cowsay.Phrase(cowMessage),
@@ -42,14 +44,14 @@ func NewCowsayCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser)
     }
 
     c := &cobra.Command{
-        Use: "cowsay",
+        Use: "cowsay <some-text>",
         Short: "Have a cow say something",
         Run: func(cmd *cobra.Command, args []string){
             dc.run(args)
         },
     }
-    c.SetOut(dc)
-    c.SetErr(dc)
+    
+    modifyUsageFunc(c, s, m)
 
     return c
 }

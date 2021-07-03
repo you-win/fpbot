@@ -39,6 +39,8 @@ func NewHighFiveCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesse
             dc.run()
         },
     }
+    
+    modifyUsageFunc(c, s, m)
 
     return c
 }

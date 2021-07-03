@@ -25,9 +25,7 @@ func (dc *DiscordCommand) Write(p []byte) (n int, err error) {
 
 func NewCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser, args []string) *cobra.Command {
     c := &cobra.Command{
-        Use: "<>",
-        Short: "uwu",
-        Long: "UwU",
+        Use: "bot?",
     }
 
     c.AddCommand(
@@ -37,21 +35,25 @@ func NewCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser, args 
         NewRepoCommand(s, m, b),
         NewCowsayCommand(s, m, b),
         NewHighFiveCommand(s, m, b),
-
-        // Admin commands
+        NewUserDataCommand(s, m, b),
         NewAdminCommand(s, m, b),
     )
 
     c.SetArgs(args)
+    modifyUsageFunc(c, s, m)
+    
+    output := ioutil.Discard
+    c.SetOut(output)
+    c.SetErr(output)
+
+    return c
+}
+
+func modifyUsageFunc(c *cobra.Command, s *dgo.Session, m *dgo.Message) {
     usageString := c.UsageString()
     c.SetUsageFunc(func(*cobra.Command) error {
         s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("```%s```", usageString))
 
         return nil
     })
-    output := ioutil.Discard
-    c.SetOut(output)
-    c.SetErr(output)
-
-    return c
 }
