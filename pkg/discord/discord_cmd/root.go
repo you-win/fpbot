@@ -25,7 +25,7 @@ func (dc *DiscordCommand) Write(p []byte) (n int, err error) {
 
 func NewCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser, args []string) *cobra.Command {
     c := &cobra.Command{
-        Use: "bot?",
+        Use: fputils.DiscordBotPrefix,
     }
 
     c.AddCommand(
