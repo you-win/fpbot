@@ -26,7 +26,7 @@ func (c *userDataCommand) run(args []string) {
 		return
 	}
 
-	userDataChannel, err := fputils.GetChannelFromGuild(pointsChannelName, messageGuild)
+	userDataChannel, err := fputils.GetChannelFromGuild(userDataChannelName, messageGuild)
 	if err != nil {
 		c.Session.ChannelMessageSend(c.Message.ChannelID, err.Error())
 		return
@@ -42,6 +42,13 @@ func (c *userDataCommand) run(args []string) {
 	)
 	if err != nil {
 		if len(messageID) > 0 {
+            if len(args) > 0 {
+                if strings.EqualFold(args[0], "delete") {
+                    // Abort early if we try to delete but there is no data
+                    c.Session.ChannelMessageSend(c.Message.ChannelID, "No user data to delete")
+                    return
+                }
+            }
 			// Create new user data
 			guildMember, err := c.Session.GuildMember(messageGuild.ID, authorID)
 			if err != nil {
@@ -56,6 +63,13 @@ func (c *userDataCommand) run(args []string) {
 				username = guildMember.Nick
 			}
 			userData = fputils.NewUserData(authorID, username)
+
+			jsonData, err := json.MarshalIndent(userData, "", "    ")
+			if err != nil {
+				c.Session.ChannelMessageSend(c.Message.ChannelID, fmt.Sprintf("Unable to marshal data: %s", err.Error()))
+				return
+			}
+			c.Session.ChannelMessageSend(userDataChannel.ID, fmt.Sprint(string(jsonData)))
 		} else {
 			c.Session.ChannelMessageSend(
 				c.Message.ChannelID,
@@ -90,7 +104,14 @@ func (c *userDataCommand) run(args []string) {
 			c.Session.ChannelMessageSend(userDataChannel.ID, fmt.Sprint(string(jsonData)))
 
 			c.Session.ChannelMessageSend(c.Message.ChannelID, "Probably a success")
+		case "delete":
+			if strings.EqualFold(args[1], "confirmed") {
+				c.Session.ChannelMessageDelete(userDataChannel.ID, messageID)
+			}
+			c.Session.ChannelMessageSend(c.Message.ChannelID, "Success")
 		}
+	default:
+		c.Session.ChannelMessageSend(c.Message.ChannelID, fmt.Sprintf("Unrecognized command"))
 	}
 }
 
@@ -104,7 +125,7 @@ func NewUserDataCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesse
 	}
 
 	c := &cobra.Command{
-		Use:   "user-data [twitch <username>]",
+		Use:   "user-data ([twitch <username>] | [delete confirmed])",
 		Short: "Interact with user data",
 		Run: func(cmd *cobra.Command, args []string) {
 			dc.run(args)
