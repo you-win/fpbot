@@ -26,8 +26,10 @@ func Run() {
 	// 	requireIdent: true,
 	// }
     bd := NewBotData()
-
 	dg.AddHandler(bd.handleRegularText)
+
+    as := NewAntiSpam()
+    dg.AddHandler(as.handleSpam)
 
 	dg.Identify.Intents = discordgo.IntentsAllWithoutPrivileged
 

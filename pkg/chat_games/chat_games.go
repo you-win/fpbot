@@ -2,6 +2,10 @@ package chat_games
 
 import "time"
 
+type ChatGameData struct {
+    Data *ChatGame
+}
+
 type ChatGame struct {
     CleanupTime time.Time
     ChannelID string
@@ -16,4 +20,5 @@ type PlayableGame interface {
     WriteScore() error
     ReadState() error
     SaveState() error
+    Score() interface{}
 }

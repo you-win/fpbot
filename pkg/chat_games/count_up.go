@@ -16,7 +16,7 @@ const (
 
 type CountUp struct {
 	ChatGame
-	Score      int
+	score      int
 	lastNumber int // Be careful of negative numbers
 }
 
@@ -26,7 +26,7 @@ func NewCountUp(channelID string) CountUp {
             CleanupTime: time.Now().Add(time.Hour),
             ChannelID: channelID,
         },
-		Score:            0,
+		score:            0,
 		lastNumber:       0,
 	}
 }
@@ -51,7 +51,7 @@ func (c *CountUp) Play(value string) bool {
 	}
 
     c.lastNumber = num
-    c.Score += 1
+    c.score += 1
     c.CleanupTime = time.Now().Add(time.Hour)
 	return true
 }
@@ -77,8 +77,8 @@ func (c *CountUp) WriteScore() error {
 		return err
 	}
 
-	if c.Score > uintHighScore {
-		err = database.Set(CountUpName, strconv.Itoa(c.Score))
+	if c.score > uintHighScore {
+		err = database.Set(CountUpName, strconv.Itoa(c.score))
         if err != nil {
             return err
         }
@@ -104,7 +104,7 @@ func (c *CountUp) ReadState() error {
     if err != nil {
         return err
     }
-    c.Score = parsedScore
+    c.score = parsedScore
 
     parsedLastNumber, err := strconv.Atoi(splitData[2])
     if err != nil {
@@ -119,11 +119,15 @@ func (c *CountUp) SaveState() error {
     var sb strings.Builder
     sb.WriteString(c.CleanupTime.Format(time.UnixDate))
     sb.WriteString(",")
-    sb.WriteString(strconv.Itoa(c.Score))
+    sb.WriteString(strconv.Itoa(c.score))
     sb.WriteString(",")
     sb.WriteString(strconv.Itoa(c.lastNumber))
 
     database.Set(CountUpStateName, sb.String())
 
 	return nil
+}
+
+func (c *CountUp) Score() interface{} {
+    return c.score
 }
