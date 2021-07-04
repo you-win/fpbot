@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 
 	fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
 	dgo "github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
@@ -115,7 +116,7 @@ func (c *userDataCommand) run(args []string) {
 	}
 }
 
-func NewUserDataCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewUserDataCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
 	dc := &userDataCommand{
 		DiscordCommand: DiscordCommand{
 			Session: s,

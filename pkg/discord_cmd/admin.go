@@ -2,6 +2,7 @@ package discord_cmd
 
 import (
     fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
     "github.com/spf13/cobra"
     dgo "github.com/bwmarrin/discordgo"
@@ -11,7 +12,7 @@ type adminCommand struct {
     DiscordCommand
 }
 
-func NewAdminCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewAdminCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
     c := &cobra.Command{
         Use: "admin",
         Short: "Perform an admin action",

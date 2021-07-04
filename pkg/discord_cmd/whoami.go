@@ -1,7 +1,7 @@
 package discord_cmd
 
 import (
-    fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
     "github.com/spf13/cobra"
     dgo "github.com/bwmarrin/discordgo"
@@ -19,7 +19,7 @@ func (c *whoamiCommand) run() {
     c.Session.ChannelMessageSend(c.Message.ChannelID, whoamiName)
 }
 
-func NewWhoAmICommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewWhoAmICommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
     dc := &whoamiCommand{
         DiscordCommand: DiscordCommand{
             Session: s,

@@ -1,59 +1,36 @@
 package discord
 
-import (
-	"strings"
-	"time"
+// import (
+// 	"strings"
+// 	"time"
 
-    "fpbot/pkg/utils"
-    "fpbot/pkg/discord/discord_cmd"
+//     // "fpbot/pkg/utils"
+//     // "fpbot/pkg/discord/discord_cmd"
+//     fpmodel "fpbot/pkg/model"
 
-	dgo "github.com/bwmarrin/discordgo"
-    // db "github.com/replit/database-go"
-)
+// 	dgo "github.com/bwmarrin/discordgo"
+//     // db "github.com/replit/database-go"
+// )
 
-const (
-	botRepo          = "https://github.com/you-win/fpbot"
-	twitchURL        = "https://www.twitch.tv/team_youwin"
-	scheduleTemplate = `Streaming schedule for https://www.twitch.tv/team_youwin
-All times in US Eastern time.
-Streams may start/end later than listed.
---------------------------------------------------------
-Sun: %s
-Mon: %s
-Tue: %s
-Wed: %s
-Thu: %s
-Fri: %s
-Sat: %s
---------------------------------------------------------`
-)
+// func NewBotData() fpmodel.BotData {
+//     return fpmodel.BotData {
+//         StartTime:    time.Now(),
+//         LastRateLimitedCommandTime: time.Now(),
+//     }
+// }
 
-type BotData struct {
-	startTime    time.Time
-}
+// func (bd *fpmodel.BotData) handleRegularText(s *dgo.Session, m *dgo.MessageCreate) {
+// 	message, failed := utils.CheckCommand(s, m.Message)
+// 	if failed || utils.CheckForSelf(s, m.Message) {
+//         return
+// 	}
 
-func NewBotData() BotData {
-    return BotData {
-        startTime:    time.Now(),
-    }
-}
+//     splitMessage := strings.Split(message, " ")
 
-func (bd BotData) GetStartTime() time.Time {
-    return bd.startTime
-}
+//     cmd := discord_cmd.NewCommand(s, m.Message, bd, splitMessage)
 
-func (bd *BotData) handleRegularText(s *dgo.Session, m *dgo.MessageCreate) {
-	message, failed := utils.CheckCommand(s, m.Message)
-	if failed || utils.CheckForSelf(s, m.Message) {
-        return
-	}
-
-    splitMessage := strings.Split(message, " ")
-
-    cmd := discord_cmd.NewCommand(s, m.Message, bd, splitMessage)
-
-    err := cmd.Execute()
-    if err != nil {
-        s.ChannelMessageSend(m.ChannelID, err.Error())
-    }
-}
+//     err := cmd.Execute()
+//     if err != nil {
+//         s.ChannelMessageSend(m.ChannelID, err.Error())
+//     }
+// }

@@ -7,6 +7,7 @@ import (
     "encoding/json"
 
 	fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
 	dgo "github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
@@ -88,7 +89,7 @@ func (c *adminPointsCommand) run(args []string) {
     c.Session.ChannelMessageSend(c.Message.ChannelID, "Probably a success")
 }
 
-func NewAdminPointsCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewAdminPointsCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
 	dc := &adminPointsCommand{
 		DiscordCommand: DiscordCommand{
 			Session: s,

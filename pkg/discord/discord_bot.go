@@ -6,6 +6,10 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+    "time"
+
+    // fpmodel "fpbot/pkg/model"
+    cmd "fpbot/pkg/discord_cmd"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -21,12 +25,12 @@ func Run() {
 
 	defer dg.Close()
 
-	// bd := botData{
-	// 	startTime:    time.Now(),
-	// 	requireIdent: true,
-	// }
-    bd := NewBotData()
-	dg.AddHandler(bd.handleRegularText)
+	bd := cmd.BotData{
+		StartTime:    time.Now(),
+		LastRateLimitedCommandTime: time.Now(),
+	}
+    // bd := NewBotData()
+	dg.AddHandler(bd.HandleRegularText)
 
     as := NewAntiSpam()
     dg.AddHandler(as.handleSpam)

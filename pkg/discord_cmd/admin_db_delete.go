@@ -3,7 +3,7 @@ package discord_cmd
 import (
 	"fmt"
 
-	fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
 	dgo "github.com/bwmarrin/discordgo"
     db "github.com/replit/database-go"
@@ -32,7 +32,7 @@ func (c *dbDeleteCommand) run(args []string) {
     c.Session.ChannelMessageSend(c.Message.ChannelID, "Probably a success")
 }
 
-func NewDBDeleteCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewDBDeleteCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
 	dc := &dbDeleteCommand{
 		DiscordCommand: DiscordCommand{
 			Session: s,

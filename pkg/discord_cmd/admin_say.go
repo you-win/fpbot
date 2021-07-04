@@ -4,6 +4,7 @@ import (
     "strings"
 
     fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
     "github.com/spf13/cobra"
     dgo "github.com/bwmarrin/discordgo"
@@ -33,7 +34,7 @@ func (c *sayCommand) run(args []string) {
     c.Session.ChannelMessageSend(channelToSendTo.ID, strings.Join(args[1:], " "))
 }
 
-func NewSayCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewSayCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
     dc := &sayCommand{
         DiscordCommand: DiscordCommand{
             Session: s,

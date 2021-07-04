@@ -4,12 +4,7 @@ import (
     "strings"
     "errors"
     "fmt"
-    "time"
 )
-
-type BotDataAccesser interface {
-    GetStartTime() time.Time
-}
 
 func ReplaceStringAt(input string, startString string, endString string, newString string) (string, error) {
 	startIndex := strings.Index(input, startString)

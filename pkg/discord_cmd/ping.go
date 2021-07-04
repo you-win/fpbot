@@ -1,7 +1,7 @@
 package discord_cmd
 
 import (
-    fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
     "github.com/spf13/cobra"
     dgo "github.com/bwmarrin/discordgo"
@@ -15,7 +15,7 @@ func (c *pingCommand) run() {
     c.Session.ChannelMessageSend(c.Message.ChannelID, "Pong!")
 }
 
-func NewPingCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewPingCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
     dc := &pingCommand{
         DiscordCommand: DiscordCommand{
             Session: s,

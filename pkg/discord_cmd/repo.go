@@ -1,7 +1,7 @@
 package discord_cmd
 
 import (
-    fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
     "github.com/spf13/cobra"
     dgo "github.com/bwmarrin/discordgo"
@@ -17,7 +17,7 @@ func (c *repoCommand) run() {
     c.Session.ChannelMessageSend(c.Message.ChannelID, botRepo)
 }
 
-func NewRepoCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser) *cobra.Command {
+func NewRepoCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cobra.Command {
     dc := &repoCommand{
         DiscordCommand: DiscordCommand{
             Session: s,

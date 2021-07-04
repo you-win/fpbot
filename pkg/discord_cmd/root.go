@@ -4,17 +4,41 @@ import (
     "fmt"
     "io/ioutil"
     "bytes"
+    "time"
+    "strings"
 
     fputils "fpbot/pkg/utils"
+    // fpmodel "fpbot/pkg/model"
 
     "github.com/spf13/cobra"
     dgo "github.com/bwmarrin/discordgo"
 )
 
+type BotData struct {
+    StartTime    time.Time
+    LastRateLimitedCommandTime time.Time
+}
+
+func (bd *BotData) HandleRegularText(s *dgo.Session, m *dgo.MessageCreate) {
+	message, failed := fputils.CheckCommand(s, m.Message)
+	if failed || fputils.CheckForSelf(s, m.Message) {
+        return
+	}
+
+    splitMessage := strings.Split(message, " ")
+
+    cmd := NewCommand(s, m.Message, bd, splitMessage)
+
+    err := cmd.Execute()
+    if err != nil {
+        s.ChannelMessageSend(m.ChannelID, err.Error())
+    }
+}
+
 type DiscordCommand struct {
     Session *dgo.Session
     Message *dgo.Message
-    BotData fputils.BotDataAccesser
+    BotData *BotData
     buffer bytes.Buffer
 }
 
@@ -23,7 +47,7 @@ func (dc *DiscordCommand) Write(p []byte) (n int, err error) {
     return dc.buffer.Write(p)
 }
 
-func NewCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser, args []string) *cobra.Command {
+func NewCommand(s *dgo.Session, m *dgo.Message, b *BotData, args []string) *cobra.Command {
     c := &cobra.Command{
         Use: fputils.DiscordBotPrefix,
     }
@@ -36,6 +60,8 @@ func NewCommand(s *dgo.Session, m *dgo.Message, b fputils.BotDataAccesser, args 
         NewCowsayCommand(s, m, b),
         NewHighFiveCommand(s, m, b),
         NewUserDataCommand(s, m, b),
+        NewJokeCommand(s, m, b),
+
         NewAdminCommand(s, m, b),
     )
 
