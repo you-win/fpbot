@@ -7,16 +7,24 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	tgo "github.com/gempir/go-twitch-irc/v2"
 )
 
-const refreshURL = "https://id.twitch.tv/oauth2/token?grant_type=refresh_token&refresh_token=%s&client_id=%s&client_secret=%s"
+const (
+	refreshURL = "https://id.twitch.tv/oauth2/token?grant_type=refresh_token&refresh_token=%s&client_id=%s&client_secret=%s"
+
+	commandChar = "?"
+)
 
 func Run() {
 	client := &http.Client{}
 
 	twitchUser := os.Getenv("TWITCH_USER")
+
+	twitchUserDiscord := os.Getenv("TWITCH_USER_DISCORD")
+	twitchUserGithub := os.Getenv("TWITCH_USER_GITHUB")
 
 	refreshToken := os.Getenv("TWITCH_REFRESH_TOKEN")
 	clientID := os.Getenv("TWITCH_CLIENT_ID")
@@ -58,11 +66,35 @@ func Run() {
 	twitchClient.Join(twitchUser)
 
 	twitchClient.OnConnect(func() {
-		log.Println("Connected")
+		log.Println("Connected to chat")
 	})
 
 	twitchClient.OnPrivateMessage(func(message tgo.PrivateMessage) {
-		log.Println(message.Message)
+		if !strings.EqualFold(string(message.Message[0]), commandChar) {
+			return
+		}
+
+		commands := strings.Fields(message.Message[1:])
+		if len(commands) < 1 {
+			return
+		}
+
+		switch commands[0] {
+		case "help":
+			twitchClient.Say(twitchUser, "Possible commands: ping, lurk, discord, donate, repo")
+		case "ping":
+			twitchClient.Say(twitchUser, "pong")
+		case "lurk":
+			twitchClient.Say(twitchUser, fmt.Sprintf("Thanks for lurking, %s", message.User.DisplayName))
+		case "discord":
+			twitchClient.Say(twitchUser, fmt.Sprintf("%s's Discord can be found here: %s", twitchUser, twitchUserDiscord))
+		case "donate":
+			twitchClient.Say(twitchUser, fmt.Sprintf("Please don't. Dropping a star on one of my github repos is enough: %s. If you really want to, then you can subscribe to the channel.", twitchUserGithub))
+		case "repo":
+			twitchClient.Say(twitchUser, "The bot's code can be found here: https://github.com/you-win/fpbot")
+		default:
+			twitchClient.Say(twitchUser, fmt.Sprintf("Unrecognized command: %s Type ~help for a list of commands", commands[0]))
+		}
 	})
 
 	err = twitchClient.Connect()
