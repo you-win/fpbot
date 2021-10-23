@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	fputils "fpbot/pkg/utils"
-    // fpmodel "fpbot/pkg/model"
+	// fpmodel "fpbot/pkg/model"
 
 	dgo "github.com/bwmarrin/discordgo"
 	"github.com/spf13/cobra"
@@ -120,8 +120,8 @@ func NewUpdateStreamInfoCommand(s *dgo.Session, m *dgo.Message, b *BotData) *cob
 			dc.run(args)
 		},
 	}
-	
-    modifyUsageFunc(c, s, m)
+
+	modifyUsageFunc(c, s, m)
 
 	return c
 }

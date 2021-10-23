@@ -3,6 +3,7 @@ package discord
 import (
 	"encoding/json"
 	"fmt"
+	"fpbot/pkg/utils"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -15,6 +16,22 @@ import (
 const (
 	botRepo        = "https://github.com/you-win/fpbot"
 	dadJokeBaseURL = "https://icanhazdadjoke.com/"
+)
+
+const (
+	streamInfoChannelName      = "stream-info"
+	streamInfoScheduleTemplate = `Streaming schedule for https://www.twitch.tv/team_youwin
+All times in US Eastern time.
+Streams may start/end later than listed.
+--------------------------------------------------------
+Sun: %s
+Mon: %s
+Tue: %s
+Wed: %s
+Thu: %s
+Fri: %s
+Sat: %s
+--------------------------------------------------------`
 )
 
 var commands = []*dgo.ApplicationCommand{
@@ -203,6 +220,32 @@ var commandHandlers = map[string]func(s *dgo.Session, i *dgo.InteractionCreate){
 		switch len(i.ApplicationCommandData().Options) {
 		case 1:
 			switch arg {
+			case "help":
+				interactionRespond(s, i, "```help - show this message\nupdate-stream-info <param 1> <param 2> - update stream info\ndelete-command <param 1> - delete a slash command```")
+			case "update-stream-info":
+				// Assume default
+				newSchedule := fmt.Sprintf(streamInfoScheduleTemplate,
+					"7-10pm (Programming)",
+					"n/a",
+					"7-10pm (Programming)",
+					"9-11pm (Programming)",
+					"7-10pm (Programming)",
+					"n/a",
+					"n/a",
+				)
+
+				streamInfoChannel, streamInfoChannelMessages, err := getStreamInfoData(s, i)
+				if err != nil {
+					interactionRespond(s, i, fmt.Sprintf("Unable to get stream info data: %s", err.Error()))
+					return
+				}
+
+				if len(streamInfoChannelMessages) > 0 {
+					s.ChannelMessageDelete(streamInfoChannel.ID, streamInfoChannelMessages[0].ID)
+				}
+
+				s.ChannelMessageSend(streamInfoChannel.ID, fmt.Sprintf("```%s```", newSchedule))
+				interactionRespond(s, i, fmt.Sprintf("Successfully updated %s", streamInfoChannelName))
 			default:
 				interactionRespond(s, i, fmt.Sprintf("Unhandled command parameter for: %s", arg))
 			}
@@ -237,6 +280,48 @@ var commandHandlers = map[string]func(s *dgo.Session, i *dgo.InteractionCreate){
 			arg1 := i.ApplicationCommandData().Options[1].StringValue()
 			arg2 := i.ApplicationCommandData().Options[2].StringValue()
 			switch arg {
+			case "update-stream-info":
+				streamInfoChannel, streamInfoChannelMessages, err := getStreamInfoData(s, i)
+				if err != nil {
+					interactionRespond(s, i, fmt.Sprintf("Unable to get stream info data: %s", err.Error()))
+					return
+				}
+
+				newSchedule := ""
+				if len(streamInfoChannelMessages) > 0 {
+					lastMessageID := streamInfoChannelMessages[0].ID
+
+					lastMessage, err := s.ChannelMessage(streamInfoChannel.ID, lastMessageID)
+					if err != nil {
+						interactionRespond(s, i, fmt.Sprintf("Unable to get last stream info channel message: %s", err.Error()))
+						return
+					}
+
+					newSchedule = lastMessage.Content
+				} else {
+					newSchedule = fmt.Sprintf(streamInfoScheduleTemplate,
+						"7-10pm (Programming)",
+						"n/a",
+						"7-10pm (Programming)",
+						"9-11pm (Programming)",
+						"7-10pm (Programming)",
+						"n/a",
+						"n/a",
+					)
+				}
+
+				newSchedule, err = utils.ReplaceStringAt(newSchedule, fmt.Sprintf("%s ", arg1), "\n", arg2)
+				if err != nil {
+					interactionRespond(s, i, fmt.Sprintf("Unable to create new schedule: %s", err.Error()))
+					return
+				}
+
+				if len(streamInfoChannelMessages) > 0 {
+					s.ChannelMessageDelete(streamInfoChannel.ID, streamInfoChannelMessages[0].ID)
+				}
+
+				s.ChannelMessageSend(streamInfoChannel.ID, newSchedule)
+				interactionRespond(s, i, fmt.Sprintf("Successfully updated %s", streamInfoChannelName))
 			default:
 				interactionRespond(s, i, fmt.Sprintf("Unhandled command parameters for %s %s %s, aborting", arg, arg1, arg2))
 			}
@@ -267,4 +352,23 @@ func sendFollowupMessage(s *dgo.Session, i *dgo.InteractionCreate, message strin
 	s.FollowupMessageCreate(s.State.User.ID, i.Interaction, true, &dgo.WebhookParams{
 		Content: message,
 	})
+}
+
+func getStreamInfoData(s *dgo.Session, i *dgo.InteractionCreate) (*dgo.Channel, []*dgo.Message, error) {
+	guild, err := getInteractionGuild(s, i)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	streamInfoChannel, err := getChannelFromGuild(guild, streamInfoChannelName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	streamInfoChannelMessages, err := s.ChannelMessages(streamInfoChannel.ID, 1, "", "", "")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return streamInfoChannel, streamInfoChannelMessages, nil
 }

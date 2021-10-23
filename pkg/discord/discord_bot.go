@@ -17,6 +17,10 @@ var (
 	guildID      string
 )
 
+type DiscordRunner struct {
+	// twitchMessages chan
+}
+
 type BotData struct {
 	StartTime                  time.Time
 	LastRateLimitedCommandTime time.Time
@@ -50,6 +54,12 @@ func Run() {
 	// Anti-spam
 	as := NewAntiSpam()
 	s.AddHandler(as.handleSpam)
+
+	// Reaction roles
+	rr := newReactionRoles()
+	s.AddHandler(rr.handleReady)
+	s.AddHandler(rr.handleReactionAdd)
+	s.AddHandler(rr.handleReactionRemove)
 
 	err = s.Open()
 	if err != nil {
