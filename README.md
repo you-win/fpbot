@@ -2,6 +2,15 @@
 The friendliest potato bot there ever was.
 
 ## Quickstart
-This bot relies on `DISCORD_TOKEN` being present in your env, where `DISCORD_TOKEN` is your discord bot token.
+This bot relies on several environment variables being present:
+* DISCORD_TOKEN
+* GUILD_ID
+
+* TWITCH_REFRESH_TOKEN
+* TWITCH_CLIENT_ID
+* TWITCH_CLIENT_SECRET
+* TWITCH_USER
+* TWITCH_USER_DISCORD
+* TWITCH_USER_GITHUB
 
 Run the command `go run main.go` to run the bot.
