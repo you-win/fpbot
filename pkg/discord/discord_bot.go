@@ -1,10 +1,12 @@
 package discord
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	// fpmodel "fpbot/pkg/model"
@@ -30,7 +32,7 @@ var bd *BotData
 
 var s *discordgo.Session
 
-func Run() {
+func Run(twitchToken string) {
 	bd = &BotData{
 		StartTime:                  time.Now(),
 		LastRateLimitedCommandTime: time.Now(),
@@ -77,8 +79,57 @@ func Run() {
 	}
 
 	log.Println("Bot is running...")
-	sc := make(chan os.Signal, 1)
-	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	<-sc
-	log.Println("Bot leaving this plane of existence. おやすみ")
+
+	twitchClient := &http.Client{}
+	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", "44149998"), nil)
+	if err != nil {
+		log.Printf("Unable to create request for polling twitch stream: %s", err.Error())
+		return
+	}
+
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", twitchToken))
+	req.Header.Add("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
+
+	isLive := false
+	for {
+		res, err := twitchClient.Do(req)
+		if err != nil {
+			log.Printf("Error when polling twitch stream: %s", err.Error())
+			// Don't exit here, since I guess this can just fail sometimes
+		}
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			log.Printf("Unable to read response body: %s", err.Error())
+		}
+
+		var jsonBody map[string]interface{}
+		err = json.Unmarshal(body, &jsonBody)
+		if err != nil {
+			log.Printf("Unable to unmarshal json response: %s", err.Error())
+		}
+
+		if res.StatusCode != 200 {
+			log.Printf("Bad response from user endpoint: %s", jsonBody)
+		}
+
+		data := jsonBody["data"].([]interface{})
+
+		if len(data) == 0 {
+			isLive = false
+		} else {
+			if !isLive {
+				s.ChannelMessageSend("901833984542134293", "<@&901528644382519317> team_youwin is live at https://www.twitch.tv/team_youwin")
+				isLive = true
+			}
+		}
+
+		res.Body.Close()
+
+		time.Sleep(time.Second * 60)
+	}
+
+	// sc := make(chan os.Signal, 1)
+	// signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
+	// <-sc
+	// log.Println("Bot leaving this plane of existence. おやすみ")
 }

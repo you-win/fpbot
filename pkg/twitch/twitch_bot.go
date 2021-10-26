@@ -1,12 +1,9 @@
 package twitch
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"math/rand"
-	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -21,50 +18,51 @@ const (
 	commandChar = "?"
 )
 
-func Run() {
-	client := &http.Client{}
+func Run(twitchToken string) {
+	// client := &http.Client{}
 
 	twitchUser := os.Getenv("TWITCH_USER")
 
 	twitchUserDiscord := os.Getenv("TWITCH_USER_DISCORD")
 	twitchUserGithub := os.Getenv("TWITCH_USER_GITHUB")
 
-	refreshToken := os.Getenv("TWITCH_REFRESH_TOKEN")
-	clientID := os.Getenv("TWITCH_CLIENT_ID")
-	clientSecret := os.Getenv("TWITCH_CLIENT_SECRET")
+	// refreshToken := os.Getenv("TWITCH_REFRESH_TOKEN")
+	// clientID := os.Getenv("TWITCH_CLIENT_ID")
+	// clientSecret := os.Getenv("TWITCH_CLIENT_SECRET")
 
-	req, err := http.NewRequest("POST", fmt.Sprintf(refreshURL, refreshToken, clientID, clientSecret), nil)
-	if err != nil {
-		log.Printf("Unable to construct refresh request: %s", err.Error())
-		return
-	}
+	// req, err := http.NewRequest("POST", fmt.Sprintf(refreshURL, refreshToken, clientID, clientSecret), nil)
+	// if err != nil {
+	// 	log.Printf("Unable to construct refresh request: %s", err.Error())
+	// 	return
+	// }
 
-	res, err := client.Do(req)
-	if err != nil {
-		log.Printf("Unable to send refresh request: %s", err.Error())
-		return
-	}
+	// res, err := client.Do(req)
+	// if err != nil {
+	// 	log.Printf("Unable to send refresh request: %s", err.Error())
+	// 	return
+	// }
 
-	defer res.Body.Close()
-	body, err := ioutil.ReadAll(res.Body)
-	if err != nil {
-		log.Printf("Unable to read response body: %s", err.Error())
-		return
-	}
+	// defer res.Body.Close()
+	// body, err := ioutil.ReadAll(res.Body)
+	// if err != nil {
+	// 	log.Printf("Unable to read response body: %s", err.Error())
+	// 	return
+	// }
 
-	var jsonBody map[string]interface{}
-	err = json.Unmarshal(body, &jsonBody)
-	if err != nil {
-		log.Printf("Unable to unmarshal json response: %s", err.Error())
-		return
-	}
+	// var jsonBody map[string]interface{}
+	// err = json.Unmarshal(body, &jsonBody)
+	// if err != nil {
+	// 	log.Printf("Unable to unmarshal json response: %s", err.Error())
+	// 	return
+	// }
 
-	if res.StatusCode != 200 {
-		log.Printf("Bad response from refresh endpoint: %s", jsonBody)
-		return
-	}
+	// if res.StatusCode != 200 {
+	// 	log.Printf("Bad response from refresh endpoint: %s", jsonBody)
+	// 	return
+	// }
 
-	twitchClient := tgo.NewClient(twitchUser, fmt.Sprintf("oauth:%s", jsonBody["access_token"].(string)))
+	// twitchClient := tgo.NewClient(twitchUser, fmt.Sprintf("oauth:%s", jsonBody["access_token"].(string)))
+	twitchClient := tgo.NewClient(twitchUser, fmt.Sprintf("oauth:%s", twitchToken))
 
 	twitchClient.Join(twitchUser)
 
@@ -120,7 +118,7 @@ func Run() {
 		}
 	})
 
-	err = twitchClient.Connect()
+	err := twitchClient.Connect()
 	if err != nil {
 		log.Printf("Unable to connect to Twitch IRC: %s", err.Error())
 		return
