@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"fpbot/pkg/utils"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"strings"
 	"time"
@@ -70,6 +71,18 @@ var commands = []*dgo.ApplicationCommand{
 	{
 		Name:        "uptime",
 		Description: "Get the current uptime",
+	},
+	{
+		Name:        "roll",
+		Description: "Roll a die (dice is plural)",
+		Options: []*dgo.ApplicationCommandOption{
+			{
+				Type:        dgo.ApplicationCommandOptionInteger,
+				Name:        "sides",
+				Description: "Number of sides on the die",
+				Required:    false,
+			},
+		},
 	},
 
 	{
@@ -175,6 +188,24 @@ var commandHandlers = map[string]func(s *dgo.Session, i *dgo.InteractionCreate){
 	},
 	"uptime": func(s *dgo.Session, i *dgo.InteractionCreate) {
 		interactionRespond(s, i, time.Since(bd.StartTime).String())
+	},
+	"roll": func(s *dgo.Session, i *dgo.InteractionCreate) {
+		result := 0
+		sides := 6
+		rand.Seed(time.Now().UnixNano())
+
+		if len(i.ApplicationCommandData().Options) == 0 {
+			result = rand.Intn(sides) + 1
+		} else {
+			sides = int(i.ApplicationCommandData().Options[0].IntValue())
+			if sides <= 0 {
+				sides = 6
+			}
+			result = rand.Intn(sides) + 1
+		}
+
+		interactionRespond(s, i, fmt.Sprintf("Rolling a %d-sided die", sides))
+		sendFollowupMessage(s, i, fmt.Sprintf("You rolled a: %d", result))
 	},
 
 	"admin-command": func(s *dgo.Session, i *dgo.InteractionCreate) {

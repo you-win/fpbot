@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	tgo "github.com/gempir/go-twitch-irc/v2"
 )
@@ -81,7 +84,7 @@ func Run() {
 
 		switch commands[0] {
 		case "help":
-			twitchClient.Say(twitchUser, "Possible commands: ping, lurk, discord, donate, repo")
+			twitchClient.Say(twitchUser, "Possible commands: ping, lurk, discord, donate, repo, overlay, roll <param>")
 		case "ping":
 			twitchClient.Say(twitchUser, "pong")
 		case "lurk":
@@ -92,6 +95,26 @@ func Run() {
 			twitchClient.Say(twitchUser, fmt.Sprintf("Please don't. Dropping a star on one of my github repos is enough: %s. If you really want to, then you can subscribe to the channel.", twitchUserGithub))
 		case "repo":
 			twitchClient.Say(twitchUser, "The bot's code can be found here: https://github.com/you-win/fpbot")
+		case "overlay":
+			twitchClient.Say(twitchUser, "I wrote the overlay! You can find the code on my Github: https://github.com/you-win/friendly-potato-stream")
+		case "roll":
+			result := 0
+			rand.Seed(time.Now().UnixNano())
+
+			if len(commands) == 1 {
+				result = rand.Intn(6) + 1
+			} else {
+				if val, err := strconv.Atoi(commands[1]); err == nil {
+					if val <= 0 {
+						val = 6
+					}
+					result = rand.Intn(val) + 1
+				} else {
+					result = rand.Intn(6) + 1
+				}
+			}
+
+			twitchClient.Say(twitchUser, fmt.Sprintf("Rolled a: %d", result))
 		default:
 			twitchClient.Say(twitchUser, fmt.Sprintf("Unrecognized command: %s Type ~help for a list of commands", commands[0]))
 		}
