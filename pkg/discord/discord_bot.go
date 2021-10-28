@@ -92,24 +92,36 @@ func Run(twitchToken string) {
 
 	isLive := false
 	for {
+		time.Sleep(time.Second * 60)
+
 		res, err := twitchClient.Do(req)
 		if err != nil {
 			log.Printf("Error when polling twitch stream: %s", err.Error())
 			// Don't exit here, since I guess this can just fail sometimes
+			if res != nil && res.Body != nil {
+				res.Body.Close()
+			}
+			continue
 		}
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			log.Printf("Unable to read response body: %s", err.Error())
+			res.Body.Close()
+			continue
 		}
 
 		var jsonBody map[string]interface{}
 		err = json.Unmarshal(body, &jsonBody)
 		if err != nil {
 			log.Printf("Unable to unmarshal json response: %s", err.Error())
+			res.Body.Close()
+			continue
 		}
 
 		if res.StatusCode != 200 {
 			log.Printf("Bad response from user endpoint: %s", jsonBody)
+			res.Body.Close()
+			continue
 		}
 
 		data := jsonBody["data"].([]interface{})
@@ -124,8 +136,6 @@ func Run(twitchToken string) {
 		}
 
 		res.Body.Close()
-
-		time.Sleep(time.Second * 60)
 	}
 
 	// sc := make(chan os.Signal, 1)
