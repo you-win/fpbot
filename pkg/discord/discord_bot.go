@@ -19,6 +19,8 @@ var (
 	guildID      string
 )
 
+const isOfflineSwitchCounterMax = 10
+
 type DiscordRunner struct {
 	// twitchMessages chan
 }
@@ -91,8 +93,16 @@ func Run(twitchToken string) {
 	req.Header.Add("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
 
 	isLive := false
+	isSwitchable := false
+	isOfflineSwitchCounter := 0
 	for {
 		time.Sleep(time.Second * 60)
+
+		if isOfflineSwitchCounter > isOfflineSwitchCounterMax {
+			isSwitchable = true
+			isLive = false
+			isOfflineSwitchCounter = 0
+		}
 
 		res, err := twitchClient.Do(req)
 		if err != nil {
@@ -101,12 +111,14 @@ func Run(twitchToken string) {
 			if res != nil && res.Body != nil {
 				res.Body.Close()
 			}
+			isOfflineSwitchCounter += 1
 			continue
 		}
 		body, err := ioutil.ReadAll(res.Body)
 		if err != nil {
 			log.Printf("Unable to read response body: %s", err.Error())
 			res.Body.Close()
+			isOfflineSwitchCounter += 1
 			continue
 		}
 
@@ -115,23 +127,27 @@ func Run(twitchToken string) {
 		if err != nil {
 			log.Printf("Unable to unmarshal json response: %s", err.Error())
 			res.Body.Close()
+			isOfflineSwitchCounter += 1
 			continue
 		}
 
 		if res.StatusCode != 200 {
 			log.Printf("Bad response from user endpoint: %s", jsonBody)
 			res.Body.Close()
+			isOfflineSwitchCounter += 1
 			continue
 		}
 
 		data := jsonBody["data"].([]interface{})
 
 		if len(data) == 0 {
-			isLive = false
+			isOfflineSwitchCounter += 1
 		} else {
-			if !isLive {
+			if !isLive && isSwitchable {
 				s.ChannelMessageSend("901833984542134293", "<@&901528644382519317> team_youwin is live at https://www.twitch.tv/team_youwin")
 				isLive = true
+				isOfflineSwitchCounter = 0
+				isSwitchable = false
 			}
 		}
 
