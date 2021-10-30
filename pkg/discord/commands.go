@@ -3,6 +3,7 @@ package discord
 import (
 	"encoding/json"
 	"fmt"
+	"fpbot/pkg/common"
 	"fpbot/pkg/utils"
 	"io/ioutil"
 	"math/rand"
@@ -277,6 +278,9 @@ var commandHandlers = map[string]func(s *dgo.Session, i *dgo.InteractionCreate){
 
 				s.ChannelMessageSend(streamInfoChannel.ID, fmt.Sprintf("```%s```", newSchedule))
 				interactionRespond(s, i, fmt.Sprintf("Successfully updated %s", streamInfoChannelName))
+			case "ping-twitch":
+				db.SendData <- common.NewCrossServiceData("discord ping!", common.Twitch)
+				interactionRespond(s, i, "Pinged twitch from Discord!")
 			default:
 				interactionRespond(s, i, fmt.Sprintf("Unhandled command parameter for: %s", arg))
 			}

@@ -1,15 +1,12 @@
 package discord
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"fpbot/pkg/common"
 	"log"
-	"net/http"
+
 	"os"
 	"time"
-
-	// fpmodel "fpbot/pkg/model"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -19,23 +16,24 @@ var (
 	guildID      string
 )
 
-const isOfflineSwitchCounterMax = 10
-
-type DiscordRunner struct {
-	// twitchMessages chan
+type DiscordBot struct {
+	Session  *discordgo.Session
+	SendData chan common.CrossServiceData // Pass things to other services
 }
 
-type BotData struct {
-	StartTime                  time.Time
-	LastRateLimitedCommandTime time.Time
+var bd *common.BotData
+
+var db *DiscordBot
+
+func NewDiscordBot() *DiscordBot {
+	db = &DiscordBot{
+		SendData: make(chan common.CrossServiceData),
+	}
+	return db
 }
 
-var bd *BotData
-
-var s *discordgo.Session
-
-func Run(twitchToken string) {
-	bd = &BotData{
+func (db *DiscordBot) Run(quit chan os.Signal) {
+	bd = &common.BotData{
 		StartTime:                  time.Now(),
 		LastRateLimitedCommandTime: time.Now(),
 	}
@@ -47,6 +45,8 @@ func Run(twitchToken string) {
 	if err != nil {
 		log.Fatal("Error creating Discord session: ", err)
 	}
+
+	db.Session = s
 
 	// Slash commands
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -82,80 +82,24 @@ func Run(twitchToken string) {
 
 	log.Println("Bot is running...")
 
-	twitchClient := &http.Client{}
-	req, err := http.NewRequest("GET", fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", "44149998"), nil)
-	if err != nil {
-		log.Printf("Unable to create request for polling twitch stream: %s", err.Error())
-		return
+	<-quit
+}
+
+func (db *DiscordBot) ReceiveData(data common.CrossServiceData) {
+	switch data.Channel {
+	case common.DiscordGeneral: // TODO actually directs to bot playground
+		db.Session.ChannelMessageSend("854954868334264351", data.Message)
+	case common.DiscordAnnouncements:
+		db.Session.ChannelMessageSend("853476898855845900", data.Message)
+	case common.DiscordStreamNotifications:
+		db.Session.ChannelMessageSend("901833984542134293", data.Message)
+	case common.DiscordBotController:
+		db.Session.ChannelMessageSend("856373732813963274", data.Message)
+	default:
+		db.LogError(fmt.Sprintf("Invalid Discord message channel: %s", data.Message))
 	}
+}
 
-	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", twitchToken))
-	req.Header.Add("Client-Id", os.Getenv("TWITCH_CLIENT_ID"))
-
-	isLive := false
-	isSwitchable := false
-	isOfflineSwitchCounter := 0
-	for {
-		time.Sleep(time.Second * 60)
-
-		if isOfflineSwitchCounter > isOfflineSwitchCounterMax {
-			isSwitchable = true
-			isLive = false
-			isOfflineSwitchCounter = 0
-		}
-
-		res, err := twitchClient.Do(req)
-		if err != nil {
-			log.Printf("Error when polling twitch stream: %s", err.Error())
-			// Don't exit here, since I guess this can just fail sometimes
-			if res != nil && res.Body != nil {
-				res.Body.Close()
-			}
-			isOfflineSwitchCounter += 1
-			continue
-		}
-		body, err := ioutil.ReadAll(res.Body)
-		if err != nil {
-			log.Printf("Unable to read response body: %s", err.Error())
-			res.Body.Close()
-			isOfflineSwitchCounter += 1
-			continue
-		}
-
-		var jsonBody map[string]interface{}
-		err = json.Unmarshal(body, &jsonBody)
-		if err != nil {
-			log.Printf("Unable to unmarshal json response: %s", err.Error())
-			res.Body.Close()
-			isOfflineSwitchCounter += 1
-			continue
-		}
-
-		if res.StatusCode != 200 {
-			log.Printf("Bad response from user endpoint: %s", jsonBody)
-			res.Body.Close()
-			isOfflineSwitchCounter += 1
-			continue
-		}
-
-		data := jsonBody["data"].([]interface{})
-
-		if len(data) == 0 {
-			isOfflineSwitchCounter += 1
-		} else {
-			if !isLive && isSwitchable {
-				s.ChannelMessageSend("901833984542134293", "<@&901528644382519317> team_youwin is live at https://www.twitch.tv/team_youwin")
-				isLive = true
-				isOfflineSwitchCounter = 0
-				isSwitchable = false
-			}
-		}
-
-		res.Body.Close()
-	}
-
-	// sc := make(chan os.Signal, 1)
-	// signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
-	// <-sc
-	// log.Println("Bot leaving this plane of existence. おやすみ")
+func (db *DiscordBot) LogError(message string) {
+	db.Session.ChannelMessageSend("854954868334264351", fmt.Sprintf("[ERROR] %s", message))
 }
