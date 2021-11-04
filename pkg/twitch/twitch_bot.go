@@ -14,7 +14,6 @@ import (
 	"time"
 
 	tgo "github.com/gempir/go-twitch-irc/v2"
-	"github.com/nicklaw5/helix"
 )
 
 const (
@@ -168,36 +167,85 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 		}
 	})
 
-	err = twitchClient.Connect()
-	if err != nil {
-		log.Printf("Unable to connect to Twitch IRC: %s", err.Error())
-		return
-	}
+	go twitchClient.Connect()
+	// err = twitchClient.Connect()
+	// if err != nil {
+	// 	log.Printf("Unable to connect to Twitch IRC: %s", err.Error())
+	// 	return
+	// }
 	defer twitchClient.Disconnect()
 
-	helixClient, err := helix.NewClient(&helix.Options{
-		ClientID: clientID,
-	})
+	log.Println("Connected to Twitch chat")
+
+	// helixClient, err := helix.NewClient(&helix.Options{
+	// 	ClientID: clientID,
+	// })
+	// if err != nil {
+	// 	tb.SendData <- common.NewCrossServiceData(
+	// 		fmt.Sprintf("Unable to create helix client: %s", err.Error()),
+	// 		common.Error,
+	// 	)
+	// }
+
+	// appAccessTokenResp, err := helixClient.RequestAppAccessToken([]string{""})
+	// if err != nil {
+	// 	log.Printf("Error getting app access token: %s", err.Error())
+	// 	tb.SendData <- common.NewCrossServiceData(
+	// 		fmt.Sprintf("Unable to get app access token for helix: %s", err.Error()),
+	// 		common.Error,
+	// 	)
+	// }
+
+	// helixClient.SetAppAccessToken(appAccessTokenResp.Data.AccessToken)
+
+	res, err = client.Post(
+		fmt.Sprintf("https://id.twitch.tv/oauth2/token?client_id=%s&client_secret=%s&grant_type=client_credentials", clientID, clientSecret),
+		"application/x-www-form-urlencoded",
+		nil,
+	)
 	if err != nil {
-		tb.SendData <- common.NewCrossServiceData(
-			fmt.Sprintf("Unable to create helix client: %s", err.Error()),
-			common.Error,
-		)
+		log.Printf("Unable to get app access token: %s", err.Error())
+		return
 	}
 
-	// TODO add scope
-	appAccessTokenResp, err := helixClient.RequestAppAccessToken([]string{""})
+	body, err = ioutil.ReadAll(res.Body)
 	if err != nil {
-		tb.SendData <- common.NewCrossServiceData(
-			fmt.Sprintf("Unable to get app access token for helix: %s", err.Error()),
-			common.Error,
-		)
+		log.Printf("Unable to read response body: %s", err.Error())
+		res.Body.Close()
+		return
 	}
 
-	helixClient.SetAppAccessToken(appAccessTokenResp.Data.AccessToken)
+	err = json.Unmarshal(body, &jsonBody)
+	if err != nil {
+		log.Printf("Error when unmarshalling data: %s", err.Error())
+		res.Body.Close()
+		return
+	}
+
+	res.Body.Close()
+
+	if res.StatusCode != 200 {
+		log.Printf("Bad response from app access token endpoint: %s", err.Error())
+		return
+	}
+
+	appAccessToken := jsonBody["access_token"]
+
+	req, err = http.NewRequest(
+		"GET",
+		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", "44149998"),
+		nil,
+	)
+	if err != nil {
+		log.Printf("Unable to create streams request: %s", err.Error())
+		return
+	}
+
+	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", appAccessToken))
+	req.Header.Add("Client-Id", clientID)
 
 	isLive := false
-	isSwitchable := false
+	isSwitchable := true
 	isOfflineSwitchCounter := 0
 
 	for {
@@ -205,38 +253,63 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 		case <-quit:
 			return
 		default:
-			time.Sleep(time.Second * 60)
+			if isSwitchable {
+				isSwitchable = false
+				go func() {
+					time.Sleep(time.Second * 60)
 
-			if isOfflineSwitchCounter > isOfflineSwitchCounterMax {
-				isSwitchable = true
-				isLive = false
-				isOfflineSwitchCounter = 0
-			}
+					if isOfflineSwitchCounter > isOfflineSwitchCounterMax {
+						isLive = false
+						isOfflineSwitchCounter = 0
+					}
 
-			resp, err := helixClient.GetStreams(&helix.StreamsParams{
-				UserLogins: []string{"team_youwin"},
-			})
-			if err != nil {
-				tb.SendData <- common.NewCrossServiceData(
-					fmt.Sprintf("Unable to call get_streams endpoint: %s", err.Error()),
-					common.Error,
-				)
-				isOfflineSwitchCounter += 1
-				// continue
-			}
+					res, err = client.Do(req)
+					if err != nil {
+						log.Printf("Error when polling Twitch stream: %s", err.Error())
+						isOfflineSwitchCounter += 1
+						return
+					}
 
-			if len(resp.Data.Streams) == 0 {
-				isOfflineSwitchCounter += 1
-			} else {
-				if !isLive && isSwitchable {
-					tb.SendData <- common.NewCrossServiceData(
-						"<@&901528644382519317> team_youwin is live at https://www.twitch.tv/team_youwin",
-						common.DiscordStreamNotifications,
-					)
-					isLive = true
-					isOfflineSwitchCounter = 0
-					isSwitchable = false
-				}
+					body, err = ioutil.ReadAll(res.Body)
+					if err != nil {
+						log.Printf("Unable to read response body: %s", err.Error())
+						isOfflineSwitchCounter += 1
+						return
+					}
+
+					defer res.Body.Close()
+
+					var streamJson map[string]interface{}
+					err = json.Unmarshal(body, &streamJson)
+					if err != nil {
+						log.Printf("Unable to unmarshal json response: %s", err.Error())
+						isOfflineSwitchCounter += 1
+						return
+					}
+
+					if res.StatusCode != 200 {
+						log.Printf("Bad response from streams endpoint: %s", err.Error())
+						isOfflineSwitchCounter += 1
+						return
+					}
+
+					data := streamJson["data"].([]interface{})
+
+					if len(data) == 0 {
+						isOfflineSwitchCounter += 1
+					} else {
+						if !isLive {
+							tb.SendData <- common.NewCrossServiceData(
+								"<@&901528644382519317> team_youwin is live at https://www.twitch.tv/team_youwin",
+								common.DiscordStreamNotifications,
+							)
+							isLive = true
+							isOfflineSwitchCounter = 0
+						}
+					}
+
+					isSwitchable = true
+				}()
 			}
 		}
 	}
