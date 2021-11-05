@@ -22,7 +22,7 @@ const (
 	commandChar = "?"
 	botUserId   = "699075836" // TODO hardcoded
 
-	isOfflineSwitchCounterMax = 10
+	isOfflineSwitchCounterMax = 20
 )
 
 var bd *common.BotData
@@ -303,9 +303,9 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 								"<@&901528644382519317> team_youwin is live at https://www.twitch.tv/team_youwin",
 								common.DiscordStreamNotifications,
 							)
-							isLive = true
-							isOfflineSwitchCounter = 0
 						}
+						isLive = true
+						isOfflineSwitchCounter = 0
 					}
 
 					isSwitchable = true
