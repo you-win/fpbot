@@ -22,7 +22,7 @@ const (
 	commandChar = "?"
 	botUserId   = "699075836" // TODO hardcoded
 
-	isOfflineSwitchCounterMax = 20
+	isOfflineSwitchCounterMax = 60
 )
 
 var bd *common.BotData
