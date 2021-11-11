@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"fpbot/pkg/common"
 	"log"
+	"strconv"
 
 	"os"
 	"time"
@@ -15,6 +16,8 @@ var (
 	discordToken string
 	guildID      string
 )
+
+const DiscordEpoch = 1420070400000
 
 type DiscordBot struct {
 	Session  *discordgo.Session
@@ -92,6 +95,30 @@ func (db *DiscordBot) ReceiveData(data common.CrossServiceData) {
 	case common.DiscordAnnouncements:
 		db.Session.ChannelMessageSend("853476898855845900", data.Message)
 	case common.DiscordStreamNotifications:
+		messages, err := db.Session.ChannelMessages("901833984542134293", 1, "", "", "")
+		if err != nil {
+			log.Printf("Error when trying to query stream notifications channel: %s", err.Error())
+			return
+		}
+
+		lastMessage := messages[0]
+
+		snowflake, err := strconv.ParseInt(lastMessage.ID, 10, 64)
+		if err != nil {
+			log.Printf("Error when trying to parse the last stream notification message snowflake: %s", err.Error())
+			return
+		}
+
+		unixTimestamp := (snowflake >> 22) + DiscordEpoch
+
+		timestamp := time.Unix(unixTimestamp, 0)
+
+		nowTimestamp := time.Now()
+
+		if nowTimestamp.Sub(timestamp).Minutes() < 60 { // TODO hardcoded minute value, should pull from central location
+			return
+		}
+
 		db.Session.ChannelMessageSend("901833984542134293", data.Message)
 	case common.DiscordBotController:
 		db.Session.ChannelMessageSend("856373732813963274", data.Message)

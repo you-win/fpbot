@@ -261,12 +261,15 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 					if isOfflineSwitchCounter > isOfflineSwitchCounterMax {
 						isLive = false
 						isOfflineSwitchCounter = 0
+						isSwitchable = true
+						return
 					}
 
 					res, err = client.Do(req)
 					if err != nil {
 						log.Printf("Error when polling Twitch stream: %s", err.Error())
 						isOfflineSwitchCounter += 1
+						isSwitchable = true
 						return
 					}
 
@@ -274,6 +277,7 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 					if err != nil {
 						log.Printf("Unable to read response body: %s", err.Error())
 						isOfflineSwitchCounter += 1
+						isSwitchable = true
 						return
 					}
 
@@ -284,12 +288,14 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 					if err != nil {
 						log.Printf("Unable to unmarshal json response: %s", err.Error())
 						isOfflineSwitchCounter += 1
+						isSwitchable = true
 						return
 					}
 
 					if res.StatusCode != 200 {
 						log.Printf("Bad response from streams endpoint: %s", err.Error())
 						isOfflineSwitchCounter += 1
+						isSwitchable = true
 						return
 					}
 
