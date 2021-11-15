@@ -235,16 +235,16 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 
 	appAccessToken := jsonBody["access_token"]
 
-	// req, err = http.NewRequest(
-	// 	"GET",
-	// 	fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", "44149998"),
-	// 	nil,
-	// )
 	req, err = http.NewRequest(
 		"GET",
 		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", tb.TwitchUser),
 		nil,
 	)
+	// req, err = http.NewRequest(
+	// 	"GET",
+	// 	fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", "bobross"),
+	// 	nil,
+	// )
 	if err != nil {
 		log.Printf("Unable to create streams request: %s", err.Error())
 		return

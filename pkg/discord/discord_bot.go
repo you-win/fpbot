@@ -114,6 +114,7 @@ func (db *DiscordBot) ReceiveData(data common.CrossServiceData) {
 		}
 
 		db.Session.ChannelMessageSend("901833984542134293", data.Message)
+		// db.LogError("bob ross")
 	case common.DiscordBotController:
 		db.Session.ChannelMessageSend("856373732813963274", data.Message)
 	default:
