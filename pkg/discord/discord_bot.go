@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"fpbot/pkg/common"
 	"log"
-	"strconv"
 
 	"os"
 	"time"
@@ -22,6 +21,8 @@ const DiscordEpoch = 1420070400000
 type DiscordBot struct {
 	Session  *discordgo.Session
 	SendData chan common.CrossServiceData // Pass things to other services
+
+	LastStreamNotificationTime *time.Time
 }
 
 var bd *common.BotData
@@ -29,8 +30,11 @@ var bd *common.BotData
 var db *DiscordBot
 
 func NewDiscordBot() *DiscordBot {
+	oneHourBefore := time.Now().AddDate(0, -1, 0)
 	db = &DiscordBot{
 		SendData: make(chan common.CrossServiceData),
+
+		LastStreamNotificationTime: &oneHourBefore,
 	}
 	return db
 }
@@ -83,7 +87,7 @@ func (db *DiscordBot) Run(quit chan os.Signal) {
 		log.Printf("Added %s", v.Name)
 	}
 
-	log.Println("Bot is running...")
+	log.Println("Discord bot is running...")
 
 	<-quit
 }
@@ -95,29 +99,14 @@ func (db *DiscordBot) ReceiveData(data common.CrossServiceData) {
 	case common.DiscordAnnouncements:
 		db.Session.ChannelMessageSend("853476898855845900", data.Message)
 	case common.DiscordStreamNotifications:
-		messages, err := db.Session.ChannelMessages("901833984542134293", 1, "", "", "")
-		if err != nil {
-			log.Printf("Error when trying to query stream notifications channel: %s", err.Error())
+		if time.Since(*db.LastStreamNotificationTime).Hours() < 3.0 {
+			db.Session.ChannelMessageSend("856373732813963274", "Bot tried to send a stream notification too quickly")
 			return
 		}
 
-		lastMessage := messages[0]
+		currentTime := time.Now()
 
-		snowflake, err := strconv.ParseInt(lastMessage.ID, 10, 64)
-		if err != nil {
-			log.Printf("Error when trying to parse the last stream notification message snowflake: %s", err.Error())
-			return
-		}
-
-		unixTimestamp := (snowflake >> 22) + DiscordEpoch
-
-		timestamp := time.Unix(unixTimestamp, 0)
-
-		nowTimestamp := time.Now()
-
-		if nowTimestamp.Sub(timestamp).Minutes() < 60 { // TODO hardcoded minute value, should pull from central location
-			return
-		}
+		db.LastStreamNotificationTime = &currentTime
 
 		db.Session.ChannelMessageSend("901833984542134293", data.Message)
 	case common.DiscordBotController:

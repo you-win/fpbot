@@ -101,7 +101,7 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 	twitchClient.Join(tb.TwitchUser)
 
 	twitchClient.OnConnect(func() {
-		log.Println("Connected to chat")
+		log.Println("Connected to Twitch IRC chat")
 	})
 
 	twitchClient.OnPrivateMessage(func(message tgo.PrivateMessage) {
@@ -175,7 +175,7 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 	// }
 	defer twitchClient.Disconnect()
 
-	log.Println("Connected to Twitch chat")
+	log.Println("Twitch bot sucessfully started, probably")
 
 	// helixClient, err := helix.NewClient(&helix.Options{
 	// 	ClientID: clientID,
@@ -231,9 +231,14 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 
 	appAccessToken := jsonBody["access_token"]
 
+	// req, err = http.NewRequest(
+	// 	"GET",
+	// 	fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", "44149998"),
+	// 	nil,
+	// )
 	req, err = http.NewRequest(
 		"GET",
-		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_id=%s", "44149998"),
+		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", tb.TwitchUser),
 		nil,
 	)
 	if err != nil {
