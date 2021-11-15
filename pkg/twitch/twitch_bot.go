@@ -127,13 +127,17 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 
 		switch commands[0] {
 		case "help":
-			twitchClient.Say(tb.TwitchUser, "Possible commands: ping, lurk, discord, donate, repo, overlay, roll <param>, uptime, tcount")
+			twitchClient.Say(tb.TwitchUser, "Possible commands: ping, lurk, github, discord, itchio, donate, repo, overlay, roll <param>, uptime, tcount")
 		case "ping":
 			twitchClient.Say(tb.TwitchUser, "pong")
 		case "lurk":
 			twitchClient.Say(tb.TwitchUser, fmt.Sprintf("Thanks for lurking, %s", message.User.DisplayName))
+		case "github":
+			twitchClient.Say(tb.TwitchUser, fmt.Sprintf("%s's GitHub profile can be found here: %s", tb.TwitchUser, "https://github.com/you-win"))
 		case "discord":
 			twitchClient.Say(tb.TwitchUser, fmt.Sprintf("%s's Discord can be found here: %s", tb.TwitchUser, twitchUserDiscord))
+		case "itchio":
+			twitchClient.Say(tb.TwitchUser, fmt.Sprintf("%s's itch.io page can be found here: %s", tb.TwitchUser, "https://fakefirefly.itch.io/"))
 		case "donate":
 			twitchClient.Say(tb.TwitchUser, fmt.Sprintf("Please don't. Dropping a star on one of my github repos is enough: %s. If you really want to, then you can subscribe to the channel.", twitchUserGithub))
 		case "repo":
