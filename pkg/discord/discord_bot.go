@@ -21,8 +21,6 @@ const DiscordEpoch = 1420070400000
 type DiscordBot struct {
 	Session  *discordgo.Session
 	SendData chan common.CrossServiceData // Pass things to other services
-
-	LastStreamNotificationTime *time.Time
 }
 
 var bd *common.BotData
@@ -30,11 +28,8 @@ var bd *common.BotData
 var db *DiscordBot
 
 func NewDiscordBot() *DiscordBot {
-	oneHourBefore := time.Now().AddDate(0, -1, 0)
 	db = &DiscordBot{
 		SendData: make(chan common.CrossServiceData),
-
-		LastStreamNotificationTime: &oneHourBefore,
 	}
 	return db
 }
@@ -99,14 +94,24 @@ func (db *DiscordBot) ReceiveData(data common.CrossServiceData) {
 	case common.DiscordAnnouncements:
 		db.Session.ChannelMessageSend("853476898855845900", data.Message)
 	case common.DiscordStreamNotifications:
-		if time.Since(*db.LastStreamNotificationTime).Hours() < 3.0 {
-			db.Session.ChannelMessageSend("856373732813963274", "Bot tried to send a stream notification too quickly")
+		messages, err := db.Session.ChannelMessages("901833984542134293", 1, "", "", "")
+		if err != nil {
+			db.LogError(fmt.Sprintf("Error when trying to query stream notifications channel: %s", err.Error()))
 			return
 		}
 
-		currentTime := time.Now()
+		lastMessage := messages[0]
 
-		db.LastStreamNotificationTime = &currentTime
+		timestamp, err := discordgo.SnowflakeTimestamp(lastMessage.ID)
+		if err != nil {
+			db.LogError(fmt.Sprintf("Error when trying to get timestamp from snowflake: %s", err.Error()))
+			return
+		}
+
+		if time.Since(timestamp).Hours() < 3.0 {
+			db.LogError(fmt.Sprintf("Tried sending a stream notification message too quickly: %s", timestamp.String()))
+			return
+		}
 
 		db.Session.ChannelMessageSend("901833984542134293", data.Message)
 	case common.DiscordBotController:
@@ -117,5 +122,5 @@ func (db *DiscordBot) ReceiveData(data common.CrossServiceData) {
 }
 
 func (db *DiscordBot) LogError(message string) {
-	db.Session.ChannelMessageSend("854954868334264351", fmt.Sprintf("[ERROR] %s", message))
+	db.Session.ChannelMessageSend("856373732813963274", fmt.Sprintf("[ERROR] %s", message))
 }
