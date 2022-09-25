@@ -2,7 +2,6 @@ package discord
 
 import (
 	"fpbot/pkg/utils"
-
 	"fmt"
 	"time"
 
@@ -11,8 +10,8 @@ import (
 
 const (
 	maxStrikes                uint    = 5
-	maxSecondsBetweenMessages float64 = 5
-    resetSeconds float64 = 30
+	maxSecondsBetweenMessages float64 = 2
+    resetSeconds float64 = 15
 )
 
 type AntiSpam struct {
