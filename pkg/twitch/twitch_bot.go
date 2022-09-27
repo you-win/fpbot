@@ -167,40 +167,38 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 		case "tcount":
 			twitchClient.Say(tb.TwitchUser, "Lower than team_youwin's")
 		default:
-			twitchClient.Say(tb.TwitchUser, fmt.Sprintf("Unrecognized command: %s Type ~help for a list of commands", commands[0]))
+			twitchClient.Say(tb.TwitchUser, fmt.Sprintf("Unrecognized command: %s Type ?help for a list of commands", commands[0]))
 		}
 	})
 
 	go twitchClient.Connect()
-	// err = twitchClient.Connect()
-	// if err != nil {
-	// 	log.Printf("Unable to connect to Twitch IRC: %s", err.Error())
-	// 	return
-	// }
+		/*err = twitchClient.Connect()
+		if err != nil {
+			log.Printf("Unable to connect to Twitch IRC: %s", err.Error())
+			return
+		}*/
 	defer twitchClient.Disconnect()
 
 	log.Println("Twitch bot sucessfully started, probably")
 
-	// helixClient, err := helix.NewClient(&helix.Options{
-	// 	ClientID: clientID,
-	// })
-	// if err != nil {
-	// 	tb.SendData <- common.NewCrossServiceData(
-	// 		fmt.Sprintf("Unable to create helix client: %s", err.Error()),
-	// 		common.Error,
-	// 	)
-	// }
-
-	// appAccessTokenResp, err := helixClient.RequestAppAccessToken([]string{""})
-	// if err != nil {
-	// 	log.Printf("Error getting app access token: %s", err.Error())
-	// 	tb.SendData <- common.NewCrossServiceData(
-	// 		fmt.Sprintf("Unable to get app access token for helix: %s", err.Error()),
-	// 		common.Error,
-	// 	)
-	// }
-
-	// helixClient.SetAppAccessToken(appAccessTokenResp.Data.AccessToken)
+	/* helixClient, err := helix.NewClient(&helix.Options{
+		ClientID: clientID,
+	})
+	if err != nil {
+		tb.SendData <- common.NewCrossServiceData(
+			fmt.Sprintf("Unable to create helix client: %s", err.Error()),
+			common.Error,
+		)
+	
+	appAccessTokenResp, err := helixClient.RequestAppAccessToken([]string{""})
+	if err != nil {
+		log.Printf("Error getting app access token: %s", err.Error())
+		tb.SendData <- common.NewCrossServiceData(
+			fmt.Sprintf("Unable to get app access token for helix: %s", err.Error()),
+			common.Error,
+		)
+	
+	helixClient.SetAppAccessToken(appAccessTokenResp.Data.AccessToken)*/
 
 	res, err = client.Post(
 		fmt.Sprintf("https://id.twitch.tv/oauth2/token?client_id=%s&client_secret=%s&grant_type=client_credentials", clientID, clientSecret),
@@ -240,11 +238,11 @@ func (tb *TwitchBot) Run(quit chan os.Signal) {
 		fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", tb.TwitchUser),
 		nil,
 	)
-	// req, err = http.NewRequest(
-	// 	"GET",
-	// 	fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", "bobross"),
-	// 	nil,
-	// )
+	/* req, err = http.NewRequest(
+	 	"GET",
+	 	fmt.Sprintf("https://api.twitch.tv/helix/streams?user_login=%s", "bobross"),
+	 	nil,
+		)*/
 	if err != nil {
 		log.Printf("Unable to create streams request: %s", err.Error())
 		return
